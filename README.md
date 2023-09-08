@@ -7,6 +7,8 @@ Simply add the library named 'CanvasContext.py' to your project folder to use it
 ## Example
 
 ```python
+from CanvasContext import CanvasContext
+
 # Create a canvas with an identifier "cnv" of 500x500 pixels
 ctx = CanvasContext("cnv", 500, 300)
 
