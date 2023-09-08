@@ -1,4 +1,4 @@
-### Canvas > Jupyter / Colab
+# Canvas > Jupyter / Colab
 
 This is a library to call canvas from Jupyter or Google Colab
 
