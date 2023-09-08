@@ -2,7 +2,7 @@
 
 This is a library to call canvas from Jupyter or Google Colab
 
-Just add the library to the project folder and use it.
+Just add the library named 'CanvasContext' to the project folder and use it.
 
 ## Example
 
