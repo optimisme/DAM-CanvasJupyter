@@ -6,7 +6,7 @@ Just add the library to the project folder and use it.
 
 ## Example
 
-```
+```python
 from CanvasContext import CanvasContext
 
 # Crear un canvas amb un identificador "meuCanvas" de 500x500 píxels
