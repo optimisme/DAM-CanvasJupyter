@@ -9,7 +9,7 @@ Simply add the library named 'CanvasContext.py' to your project folder to use it
 ```python
 from CanvasContext import CanvasContext
 
-# Create a canvas with an identifier "cnv" of 500x500 pixels
+# Create a canvas with an identifier "cnv" of 500x300 pixels
 ctx = CanvasContext("cnv", 500, 300)
 
 # Draw background
