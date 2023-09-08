@@ -368,6 +368,51 @@ class CanvasContext:
         """
         display(Javascript(js_code))
 
+    def drawWhiteBackground(self):
+        js_code = f"""
+        var ctx = window.getContext_{self.canvas_id}();
+        ctx.save();
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.restore();
+        """
+        display(Javascript(js_code))
+
+    def drawGridBackground(self):
+        self.drawWhiteBackground()
+
+        js_code = f"""
+        var ctx = window.getContext_{self.canvas_id}();
+        ctx.save();
+        for (let x = 0; x <= ctx.canvas.width; x += 25) {{
+            ctx.strokeStyle = (x % 50 === 0) ? "#888888" : "#cccccc";
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, ctx.canvas.height);
+            ctx.stroke();
+            
+            if (x % 50 === 0 && x !== 0) {{
+                ctx.fillStyle = "#000000";
+                ctx.fillText(x.toString(), x, 10);
+            }}
+        }}
+
+        for (let y = 0; y <= ctx.canvas.height; y += 25) {{
+            ctx.strokeStyle = (y % 50 === 0) ? "#888888" : "#cccccc";
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(ctx.canvas.width, y);
+            ctx.stroke();
+            
+            if (y % 50 === 0 && y !== 0) {{
+                ctx.fillStyle = "#000000";
+                ctx.fillText(y.toString(), 5, y + 10);
+            }}
+        }}
+        ctx.restore();
+        """
+        display(Javascript(js_code))
+
 for prop in CanvasContext.PROPERTIES.keys():
     getter = lambda self, prop=prop: self._get_property(prop)
     setter = lambda self, value, prop=prop: self._set_property(prop, value)

@@ -12,6 +12,9 @@ from CanvasContext import CanvasContext
 # Create a canvas with an identifier "cnv" of 500x500 pixels
 ctx = CanvasContext("cnv", 500, 300)
 
+# Draw background
+ctx.drawGridBackground()
+
 # Draw a filled rectangle in blue (by default) at position (50, 50) with dimensions 200x100
 ctx.fillRect(50, 50, 200, 100)
 
