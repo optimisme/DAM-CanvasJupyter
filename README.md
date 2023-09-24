@@ -82,7 +82,7 @@ ctx.restore()
 ctx.display()
 ```
 
-<img src="assets/ex0.png" alt="Example 0" width="250"/>
+<img src="assets/ex1.png" alt="Example 1" width="250"/>
 
 ## Variables
 
@@ -148,6 +148,8 @@ ctx.restore()
 ctx.display()
 ```
 
+<img src="assets/ex2.png" alt="Example 2" width="350"/>
+
 ## Extra functions
 
 There are two extra functions that can be used to draw text on the canvas:
@@ -185,6 +187,8 @@ ctx.restore()
 ctx.display()
 ```
 
+<img src="assets/ex3.png" alt="Example 3" width="250"/>
+
 ## Get canvas size
 
 This is an example of how to get canvas size:
@@ -221,6 +225,8 @@ ctx.restore()
 # Send drawing commands to the browser
 ctx.display()
 ```
+
+<img src="assets/ex4.png" alt="Example 4" width="250"/>
 
 ## Interact with Context JavaScript
 
@@ -272,3 +278,5 @@ ctx.restore()
 # Send drawing commands to the browser
 ctx.display()
 ```
+
+<img src="assets/ex5.png" alt="Example 5" width="250"/>
