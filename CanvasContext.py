@@ -2,7 +2,8 @@ from IPython.display import display, HTML, Javascript
 
 class CanvasContext:
 
-    DATA = {}
+    js_response = None
+    js_src = ""
 
     PROPERTIES = {
         "lineWidth": {"type": "number", "default": 1.0},
@@ -32,357 +33,396 @@ class CanvasContext:
     }
 
     def __init__(self, canvas_id, ample=400, alt=400):
+        
         self.canvas_id = canvas_id
-        for prop, meta in self.PROPERTIES.items():
-            setattr(self, f"_{prop}", meta["default"])  # Inicialitzem amb el valor per defecte
-        display(HTML(f"""<canvas id="{self.canvas_id}" width="{ample}" height="{alt}" style="border:1px solid black;"></canvas>"""))
-        self._defineGetContextFunction()
 
-    def _defineGetContextFunction(self):
+        # Inicialitzem amb el valor per defecte
+        for prop, meta in self.PROPERTIES.items():
+            setattr(self, f"_{prop}", meta["default"])  
+        
+        # Iniciar el canvas
+        display(HTML(f"""<canvas id="{self.canvas_id}" width="{ample}" height="{alt}" style="border:1px solid black;"></canvas>"""))
+        
+        # Inicialitzem el contexte
         js_code = f"""
-        window.getContext_{self.canvas_id} = function() {{
-            var canvas = document.getElementById('{self.canvas_id}');
-            return canvas.getContext('2d');
-        }};
+        var canvas = document.getElementById('{self.canvas_id}');
+        var ctx = canvas.getContext('2d');
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
+
+    def display(self):
+        # print(CanvasContext.js_src) 
+        display(Javascript(CanvasContext.js_src))
+
+    def normalizeText(text):
+        return "`" + text.replace("`", "\\`") + "`"
+
+    def normalizeNumbers(value):
+        if isinstance(value, (int, float)):
+            return str(value)
+        else:
+            return "`" + value.replace("`", "\\`") + "`"
 
     def _set_property(self, prop_name, value):
         meta = self.PROPERTIES[prop_name]
         if meta["type"] == "string":
-            value = f"'{value}'"
+            value = CanvasContext.normalizeText(value)
         elif meta["type"] == "number":
-            value = str(value)  # Convertim el número a string per a la interpolació
-        # Si es necessiten altres conversions de tipus, es poden afegir aquí
+            value = CanvasContext.normalizeNumbers(value)
 
         setattr(self, f"_{prop_name}", value)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
         ctx.{prop_name} = {value};
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def _get_property(self, prop_name):
         return getattr(self, f"_{prop_name}")
 
-    def measureText(self, text):
-        global DATA
-        DATA.clear()  # Neteja les dades antigues
-
+    def addVariable(self, destinationVariable, value):
+        if isinstance(value, str):
+            value = value.replace('`', '\\`')
+            value = f'`{value}`'
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        var measure = ctx.measureText('{text}');
-        IPython.notebook.kernel.execute('store_data width ' + measure.width);
+        var {destinationVariable} = {value};
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
-        # Espera que es rebin les dades (això pot ser una mica arriesgat ja que podríem entrar en un bucle infinit si no rebem les dades)
-        while 'width' not in DATA:
-            pass
-
-        return float(DATA['width'])  # Convertim l'amplada a float i la retornem
-
-    def isPointInPath(self, x, y):
-        global DATA
-        DATA.clear()  # Neteja les dades antigues
-
+    def setVariable(self, destinationVariable, value):
+        if isinstance(value, str):
+            value = value.replace('`', '\\`')
+            value = f'`{value}`'
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        var isInPath = ctx.isPointInPath({x}, {y});
-        IPython.notebook.kernel.execute('store_data inPath ' + isInPath);
+        {destinationVariable} = {value};
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
-        # Espera que es rebin les dades
-        while 'inPath' not in DATA:
-            pass
-
-        return bool(DATA['inPath'])  # Convertim a boolean i retornem
-
-    def isPointInStroke(self, x, y):
-        global DATA
-        DATA.clear()  # Neteja les dades antigues
-
+    def measureText(self, destinatinVariableName, text):
+        text_value = CanvasContext.normalizeText(text)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        var isInStroke = ctx.isPointInStroke({x}, {y});
-        IPython.notebook.kernel.execute('store_data inStroke ' + isInStroke);
+        {destinatinVariableName} = ctx.measureText({text_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
-        # Espera que es rebin les dades
-        while 'inStroke' not in DATA:
-            pass
-
-        return bool(DATA['inStroke'])  # Convertim a boolean i retornem
-
-    def getTransform(self):
-        global DATA
-        DATA.clear()  # Neteja les dades antigues
-
+    def isPointInPath(self, destinationVariable, x, y):
+        x_value = CanvasContext.normalizeNumbers(x)
+        y_value = CanvasContext.normalizeNumbers(y)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        var transform = ctx.getTransform();
-        IPython.notebook.kernel.execute('store_data transform ' + JSON.stringify([transform.a, transform.b, transform.c, transform.d, transform.e, transform.f]));
+        {destinationVariable} = ctx.isPointInPath({x_value} , {y_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
-        # Espera que es rebin les dades
-        while 'transform' not in DATA:
-            pass
-
-        return DATA['transform']  # Retorna la llista de transformacions
-
-    def getLineDash(self):
-        DATA.clear()  # Neteja les dades antigues
-
+    def isPointInStroke(self, destinationVariable, x, y):
+        x_value = CanvasContext.normalizeNumbers(x)
+        y_value = CanvasContext.normalizeNumbers(y)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        var dashes = ctx.getLineDash();
-        IPython.notebook.kernel.execute('store_data("dashes", ' + JSON.stringify(dashes) + ')');
+        {destinationVariable} = ctx.isPointInStroke({x_value} , {y_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
-        # Espera que es rebin les dades (això pot ser una mica arriesgat ja que podríem entrar en un bucle infinit si no rebem les dades)
-        while 'dashes' not in DATA:
-            pass
+    def getTransform(self, destinationVariable):
+        js_code = f"""
+        {destinationVariable} = ctx.getTransform();
+        """
+        CanvasContext.js_src += js_code
 
-        return DATA['dashes']
+    def getLineDash(self, destinationVariable):
+        js_code = f"""
+        {destinationVariable} = ctx.getLineDash();
+        """
+        CanvasContext.js_src += js_code
 
     def save(self):
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
         ctx.save();
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def restore(self):
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
         ctx.restore();
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def rectangle(self, x, y, ample, alt):
+        x_value = CanvasContext.normalizeNumbers(x)
+        y_value = CanvasContext.normalizeNumbers(y)
+        ample_value = CanvasContext.normalizeNumbers(ample)
+        alt_value = CanvasContext.normalizeNumbers(alt)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.rect({x}, {y}, {ample}, {alt});
+        ctx.rect({x_value}, {y_value}, {ample_value}, {alt_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def fillRect(self, x, y, ample, alt):
+        x_value = CanvasContext.normalizeNumbers(x)
+        y_value = CanvasContext.normalizeNumbers(y)
+        ample_value = CanvasContext.normalizeNumbers(ample)
+        alt_value = CanvasContext.normalizeNumbers(alt)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.fillRect({x}, {y}, {ample}, {alt});
+        ctx.fillRect({x_value}, {y_value}, {ample_value}, {alt_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def clearRect(self, x, y, ample, alt):
+        x_value = CanvasContext.normalizeNumbers(x)
+        y_value = CanvasContext.normalizeNumbers(y)
+        ample_value = CanvasContext.normalizeNumbers(ample)
+        alt_value = CanvasContext.normalizeNumbers(alt)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.clearRect({x}, {y}, {ample}, {alt});
+        ctx.clearRect({x_value}, {y_value}, {ample_value}, {alt_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def strokeRect(self, x, y, ample, alt):
+        x_value = CanvasContext.normalizeNumbers(x)
+        y_value = CanvasContext.normalizeNumbers(y)
+        ample_value = CanvasContext.normalizeNumbers(ample)
+        alt_value = CanvasContext.normalizeNumbers(alt)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.strokeRect({x}, {y}, {ample}, {alt});
+        ctx.strokeRect({x_value}, {y_value}, {ample_value}, {alt_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def fillText(self, text, x, y, maxAmple=None):
-        maxAmpleStr = f", {maxAmple}" if maxAmple else ""
+        text_value = CanvasContext.normalizeText(text)
+        x_value = CanvasContext.normalizeNumbers(x)
+        y_value = CanvasContext.normalizeNumbers(y)
+        maxA_value = ""
+        if (maxAmple):
+            maxA_value = CanvasContext.normalizeNumbers(maxAmple)
+            maxA_value = f", {maxA_value}"
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.fillText('{text}', {x}, {y}{maxAmpleStr});
+        ctx.fillText({text_value}, {x_value}, {y_value}{maxA_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def strokeText(self, text, x, y, maxAmple=None):
-        maxAmpleStr = f", {maxAmple}" if maxAmple else ""
+        text_value = CanvasContext.normalizeText(text)
+        x_value = CanvasContext.normalizeNumbers(x)
+        y_value = CanvasContext.normalizeNumbers(y)
+        maxA_value = ""
+        if (maxAmple):
+            maxA_value = CanvasContext.normalizeNumbers(maxAmple)
+            maxA_value = f", {maxA_value}"
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.strokeText('{text}', {x}, {y}{maxAmpleStr});
+        ctx.strokeText({text_value}, {x_value}, {y_value}{maxA_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def beginPath(self):
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
         ctx.beginPath();
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def closePath(self):
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
         ctx.closePath();
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def moveTo(self, x, y):
+        x_value = CanvasContext.normalizeNumbers(x)
+        y_value = CanvasContext.normalizeNumbers(y)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.moveTo({x}, {y});
+        ctx.moveTo({x_value}, {y_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def lineTo(self, x, y):
+        x_value = CanvasContext.normalizeNumbers(x)
+        y_value = CanvasContext.normalizeNumbers(y)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.lineTo({x}, {y});
+        ctx.lineTo({x_value}, {y_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def bezierCurveTo(self, cp1x, cp1y, cp2x, cp2y, x, y):
+        cp1x_value = CanvasContext.normalizeNumbers(cp1x)
+        cp1y_value = CanvasContext.normalizeNumbers(cp1y)
+        cp2x_value = CanvasContext.normalizeNumbers(cp2x)
+        cp2y_value = CanvasContext.normalizeNumbers(cp2y)
+        x_value = CanvasContext.normalizeNumbers(x)
+        y_value = CanvasContext.normalizeNumbers(y)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.bezierCurveTo({cp1x}, {cp1y}, {cp2x}, {cp2y}, {x}, {y});
+        ctx.bezierCurveTo({cp1x_value}, {cp1y_value}, {cp2x_value}, {cp2y_value}, {x_value}, {y_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def quadraticCurveTo(self, cpx, cpy, x, y):
+        cpx_value = CanvasContext.normalizeNumbers(cpx)
+        cpy_value = CanvasContext.normalizeNumbers(cpy)
+        x_value = CanvasContext.normalizeNumbers(x)
+        y_value = CanvasContext.normalizeNumbers(y)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.quadraticCurveTo({cpx}, {cpy}, {x}, {y});
+        ctx.quadraticCurveTo({cpx_value}, {cpy_value}, {x_value}, {y_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def arc(self, x, y, radius, startAngle, endAngle, anticlockwise=False):
+        x_value = CanvasContext.normalizeNumbers(x)
+        y_value = CanvasContext.normalizeNumbers(y)
+        radius_value = CanvasContext.normalizeNumbers(radius)
+        startAngle_value = CanvasContext.normalizeNumbers(startAngle)
+        endAngle_value = CanvasContext.normalizeNumbers(endAngle)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.arc({x}, {y}, {radius}, {startAngle}, {endAngle}, {str(anticlockwise).lower()});
+        ctx.arc({x_value}, {y_value}, {radius_value}, {startAngle_value}, {endAngle_value}, {str(anticlockwise).lower()});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def arcTo(self, x1, y1, x2, y2, radius):
+        x1_value = CanvasContext.normalizeNumbers(x1)
+        y1_value = CanvasContext.normalizeNumbers(y1)
+        x2_value = CanvasContext.normalizeNumbers(x2)
+        y2_value = CanvasContext.normalizeNumbers(y2)
+        radius_value = CanvasContext.normalizeNumbers(radius)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.arcTo({x1}, {y1}, {x2}, {y2}, {radius});
+        ctx.arcTo({x1_value}, {y1_value}, {x2_value}, {y2_value}, {radius_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def ellipse(self, x, y, radiusX, radiusY, rotation, startAngle, endAngle, anticlockwise=False):
+        x_value = CanvasContext.normalizeNumbers(x)
+        y_value = CanvasContext.normalizeNumbers(y)
+        radiusX_value = CanvasContext.normalizeNumbers(radiusX)
+        radiusY_value = CanvasContext.normalizeNumbers(radiusY)
+        rotation_value = CanvasContext.normalizeNumbers(rotation)
+        startAngle_value = CanvasContext.normalizeNumbers(startAngle)
+        endAngle_value = CanvasContext.normalizeNumbers(endAngle)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.ellipse({x}, {y}, {radiusX}, {radiusY}, {rotation}, {startAngle}, {endAngle}, {str(anticlockwise).lower()});
+        ctx.ellipse({x_value}, {y_value}, {radiusX_value}, {radiusY_value}, {rotation_value}, {startAngle_value}, {endAngle_value}, {str(anticlockwise).lower()});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def roundRect(self, x, y, width, height, radius):
-        # Implementació de rectangle amb cantons arrodonits amb un radi determinat
+        x_value = CanvasContext.normalizeNumbers(x)
+        y_value = CanvasContext.normalizeNumbers(y)
+        width_value = CanvasContext.normalizeNumbers(width)
+        height_value = CanvasContext.normalizeNumbers(height)
+        radius_value = CanvasContext.normalizeNumbers(radius)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.roundRect({x}, {y} , {width}, {height}, {radius});
+        ctx.roundRect({x_value}, {y_value} , {width_value}, {height_value}, {radius_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def fill(self):
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
         ctx.fill();
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def stroke(self):
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
         ctx.stroke();
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def clip(self):
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
         ctx.clip();
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def rotate(self, angle):
+        angle_value = CanvasContext.normalizeNumbers(angle)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.rotate({angle});
+        ctx.rotate({angle_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def scale(self, scaleX, scaleY):
+        scaleX_value = CanvasContext.normalizeNumbers(scaleX)
+        scaleY_value = CanvasContext.normalizeNumbers(scaleY)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.scale({scaleX}, {scaleY});
+        ctx.scale({scaleX_value}, {scaleY_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def translate(self, x, y):
+        x_value = CanvasContext.normalizeNumbers(x)
+        y_value = CanvasContext.normalizeNumbers(y)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.translate({x}, {y});
+        ctx.translate({x_value}, {y_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def transform(self, a, b, c, d, e, f):
+        a_value = CanvasContext.normalizeNumbers(a)
+        b_value = CanvasContext.normalizeNumbers(b)
+        c_value = CanvasContext.normalizeNumbers(c)
+        d_value = CanvasContext.normalizeNumbers(d)
+        e_value = CanvasContext.normalizeNumbers(e)
+        f_value = CanvasContext.normalizeNumbers(f)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.transform({a}, {b}, {c}, {d}, {e}, {f});
+        ctx.transform({a_value}, {b_value}, {c_value}, {d_value}, {e_value}, {f_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def setTransform(self, a, b, c, d, e, f):
+        a_value = CanvasContext.normalizeNumbers(a)
+        b_value = CanvasContext.normalizeNumbers(b)
+        c_value = CanvasContext.normalizeNumbers(c)
+        d_value = CanvasContext.normalizeNumbers(d)
+        e_value = CanvasContext.normalizeNumbers(e)
+        f_value = CanvasContext.normalizeNumbers(f)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.setTransform({a}, {b}, {c}, {d}, {e}, {f});
+        ctx.setTransform({a_value}, {b_value}, {c_value}, {d_value}, {e_value}, {f_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def resetTransform(self):
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
         ctx.resetTransform();
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def drawImage(self, source, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight):
+        sx_value = CanvasContext.normalizeNumbers(sx)
+        sy_value = CanvasContext.normalizeNumbers(sy)
+        sWidth_value = CanvasContext.normalizeNumbers(sWidth)
+        sHeight_value = CanvasContext.normalizeNumbers(sHeight)
+        dx_value = CanvasContext.normalizeNumbers(dx)
+        dy_value = CanvasContext.normalizeNumbers(dy)
+        dWidth_value = CanvasContext.normalizeNumbers(dWidth)
+        dHeight_value = CanvasContext.normalizeNumbers(dHeight)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
         var img = new Image();
         img.src = '{source}';
         img.onload = function() {{
-            ctx.drawImage(img, {sx}, {sy}, {sWidth}, {sHeight}, {dx}, {dy}, {dWidth}, {dHeight});
+            ctx.drawImage(img, {sx_value}, {sy_value}, {sWidth_value}, {sHeight_value}, {dx_value}, {dy_value}, {dWidth_value}, {dHeight_value});
         }};
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def putImageData(self, imageData, dx, dy):
         # Aquí, imageData hauria de ser una cadena que representi les dades de la imatge
+        dx_value = CanvasContext.normalizeNumbers(dx)
+        dy_value = CanvasContext.normalizeNumbers(dy)
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
-        ctx.putImageData({imageData}, {dx}, {dy});
+        ctx.putImageData({imageData}, {dx_value}, {dy_value});
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def setLineDash(self, segments):
         # Aquí, `segments` hauria de ser una llista o array de números
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
         ctx.setLineDash([{",".join(map(str, segments))}]);
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def drawWhiteBackground(self):
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
         ctx.save();
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.restore();
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
     def drawGridBackground(self):
         self.drawWhiteBackground()
-
         js_code = f"""
-        var ctx = window.getContext_{self.canvas_id}();
         ctx.save();
         for (let x = 0; x <= ctx.canvas.width; x += 25) {{
             ctx.strokeStyle = (x % 50 === 0) ? "#888888" : "#cccccc";
@@ -396,7 +436,6 @@ class CanvasContext:
                 ctx.fillText(x.toString(), x, 10);
             }}
         }}
-
         for (let y = 0; y <= ctx.canvas.height; y += 25) {{
             ctx.strokeStyle = (y % 50 === 0) ? "#888888" : "#cccccc";
             ctx.beginPath();
@@ -411,7 +450,7 @@ class CanvasContext:
         }}
         ctx.restore();
         """
-        display(Javascript(js_code))
+        CanvasContext.js_src += js_code
 
 for prop in CanvasContext.PROPERTIES.keys():
     getter = lambda self, prop=prop: self._get_property(prop)
