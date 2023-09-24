@@ -39,8 +39,7 @@ ctx.display()
 
 ```
 
-![Example 0](assets/ex0.png)
-
+<img src="assets/ex0.png" alt="Example 0" width="500"/>
 
 ## How to use it
 
@@ -82,6 +81,8 @@ ctx.restore()
 # Send drawing commands to the browser
 ctx.display()
 ```
+
+<img src="assets/ex0.png" alt="Example 0" width="250"/>
 
 ## Variables
 
