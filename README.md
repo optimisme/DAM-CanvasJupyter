@@ -228,7 +228,7 @@ ctx.display()
 
 <img src="assets/ex4.png" alt="Example 4" width="250"/>
 
-## Interact with Context JavaScript
+## Interact with JavaScript code
 
 The way this library works, is by creating JavaScript code from every CanvasContext function call.
 
