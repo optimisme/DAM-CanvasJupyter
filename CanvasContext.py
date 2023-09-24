@@ -50,6 +50,9 @@ class CanvasContext:
         """
         CanvasContext.js_src += js_code
 
+    def addJavaScript(self, js_code):
+        CanvasContext.js_src += js_code
+
     def display(self):
         # print(CanvasContext.js_src) 
         display(Javascript(CanvasContext.js_src))
