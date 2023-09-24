@@ -4,7 +4,7 @@ This small Python library allows drawing in Jupyter using the drawing Canvas. It
 
 Here's an example.
 
-### Example
+### Example 0
 
 ```python
 from CanvasContext import CanvasContext
@@ -39,6 +39,9 @@ ctx.display()
 
 ```
 
+![Example 0](assets/ex0.png)
+
+
 ## How to use it
 
 To use the library, you first need to import it:
@@ -60,7 +63,7 @@ Finally, to display the drawing, you need to call the 'display' function of the 
 ```python  
 ctx.display()
 ```
-### Example
+### Example 1
 
 ```python
 from CanvasContext import CanvasContext
@@ -94,7 +97,7 @@ Some things should be kept in mind:
 
 - When getting values from context, a parameter 'destination variable name' must be passed
 
-### Example
+### Example 2
 
 ```python
 from CanvasContext import CanvasContext
@@ -154,7 +157,7 @@ drawGridBackground: draws a grid background on the canvas
 
 **Note**: 'drawGridBackground' first calls 'drawWitheBackground'
 
-### Example
+### Example 3
 
 ```python
 from CanvasContext import CanvasContext
@@ -185,7 +188,7 @@ ctx.display()
 
 This is an example of how to get canvas size:
 
-### Example
+### Example 4
 
 ```python
 from CanvasContext import CanvasContext
@@ -228,7 +231,7 @@ This means that it's possible to interact with the JavaScript code, and modify t
 
 Additionally, it may help in working with variables more easily.
 
-### Example
+### Example 5
 
 ```python
 from CanvasContext import CanvasContext
