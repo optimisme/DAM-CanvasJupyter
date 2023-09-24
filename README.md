@@ -165,7 +165,7 @@ There are two extra functions that can be used to draw text on the canvas:
 ```python
 from CanvasContext import CanvasContext
 
-# Create a canvas with an identifier "cnv1" of 250x150 pixels
+# Create a canvas
 ctx = CanvasContext("cnv3", 250, 150)
 
 # Draw the white background
@@ -198,7 +198,7 @@ This is an example of how to get canvas size:
 ```python
 from CanvasContext import CanvasContext
 
-# Create a canvas with an identifier "cnv1" of 250x150 pixels
+# Create a canvas
 ctx = CanvasContext("cnv4", 250, 150)
 
 # Draw the white background
@@ -243,7 +243,7 @@ Additionally, it may help in working with variables more easily.
 ```python
 from CanvasContext import CanvasContext
 
-# Create a canvas with an identifier "cnv1" of 250x150 pixels
+# Create a canvas
 ctx = CanvasContext("cnv5", 250, 150)
 
 # Draw the white background
