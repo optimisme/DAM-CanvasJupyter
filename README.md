@@ -154,11 +154,11 @@ ctx.display()
 
 There are two extra functions that can be used to draw text on the canvas:
 
-drawWhiteBackground: draws a white background on the canvas
+**drawWhiteBackground**: draws a white background on the canvas
 
-drawGridBackground: draws a grid background on the canvas
+**drawGridBackground**: draws a grid background on the canvas
 
-**Note**: 'drawGridBackground' first calls 'drawWitheBackground'
+*Note*: 'drawGridBackground' first calls 'drawWitheBackground'
 
 ### Example 3
 
